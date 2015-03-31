@@ -96,13 +96,13 @@ function initialize() {
     container = document.getElementById("container");
     container.appendChild(renderer.domElement);
 
-    // draw the grid, 500 wide/tall
+    // draw the grid, GRIDWIDTH wide/tall
 
     var material = new THREE.LineBasicMaterial({
         color: 0xa0a0a0
     });
 
-    for (var i = 0; i < 26; i++) {
+    for (var i = 0; i < VERTICAL_CELLS+1; i++) {
         var geometry = new THREE.Geometry();
         geometry.vertices.push(
             new THREE.Vector3(i * CELLSIZE - (GRIDWIDTH/2), -(GRIDWIDTH/2), 25),
@@ -112,7 +112,7 @@ function initialize() {
         scene.add(line);
     }
 
-    for (var i = 0; i < 26; i++) {
+    for (var i = 0; i < HORIZONTAL_CELLS+1; i++) {
         var geometry = new THREE.Geometry();
         geometry.vertices.push(
             new THREE.Vector3(-(GRIDWIDTH/2), i * CELLSIZE - (GRIDWIDTH/2), 25),
@@ -236,7 +236,7 @@ function getCorners(cell) {
     return cell.color.geometry.vertices.slice(0);
 }
 
-function calculateLOS(sourceCorner, targetCorner) {
+function raycastLOS(sourceCorner, targetCorner) {
 
     // LOS detection happens at z-level 4
 
@@ -244,7 +244,9 @@ function calculateLOS(sourceCorner, targetCorner) {
     var target = new THREE.Vector3(targetCorner.x, targetCorner.y, 4);
     var direction = target.clone().sub(source).normalize();
 
-    var ray = new THREE.Raycaster(source, direction, 1, 10000);
+    var startDistance = 1;
+
+    var ray = new THREE.Raycaster(source, direction, startDistance, 10000);
 
     var intersects = ray.intersectObjects(collisionObjects, true);
 
@@ -255,7 +257,7 @@ function calculateLOS(sourceCorner, targetCorner) {
 
         // check if the obstacle was before or after this corner
 
-        if (Math.abs(intersects[0].distance - distance) < 1) {
+        if (Math.abs(intersects[0].distance - distance) < startDistance) {
             // console.log("line of sight to the corner ("+intersects[0].distance+":"+distance+")");
             return true;
         }
@@ -273,13 +275,58 @@ function calculateLOS(sourceCorner, targetCorner) {
     return true;
 }
 
+/*
+function horizontalLOS(sourceCorner, targetCorner) {
+    // this is for the case when the y coordinate is the same, ie. the ray
+    // is going directly right or left
+
+    var blockedAbove = false;
+    var blockedBelow = false;
+
+    var aboveCellIdxY = idxFromWidth(sourceCorner.y);
+    var belowCellIdxY = aboveCellIdxY-1;
+
+    // TODO: handle the case where the line goes along top or bottom edge of
+    // the grid
+
+    var start = idxFromWidth(sourceCorner.x);
+    var end = idxFromWidth(targetCorner.x);
+
+    if (start == end)
+        return true; // always LOS to the next cell
+
+    if (start > end) {
+        var tmp = end;
+        end = start;
+        start = tmp;
+    }
+
+    while (start < end) {
+
+        aboveCell = cells[start][aboveCellIdxY];
+        belowCell = cells[start][belowCellIdxY];
+
+        if (aboveCell.character)
+            blockedAbove = true;
+
+        if (belowCell.character)
+            blockedBelow = true;
+
+        if (blockedAbove && blockedBelow)
+            return false;
+
+        start++;
+    }
+    return true;
+}
+*/
+
 function checkAlignment(pov, corner1, corner2) {
 
     if (pov.x == corner1.x && corner1.x == corner2.x)
         return false;
     else if (pov.y == corner1.y && corner1.y == corner2.y)
         return false;
-
 
     // console.log("alignment x: "+pov.x+"/"+corner1.x+"/"+corner2.x+", y:"+pov.y+"/"+corner1.y+"/"+corner2.y);
     return true;
@@ -288,8 +335,6 @@ function checkAlignment(pov, corner1, corner2) {
 function notWalledIn(corner, index, array) {
     // see if a vertical and horizontal wall begin/end (depending on which
     // corner this is) here
-
-    // return false;
 
     var idxX = viewpointCell.i;
     var idxY = viewpointCell.j;
@@ -406,7 +451,17 @@ function calculateLOSToCell(pov, target)
         var firstCorner = false;
 
         for (var j = 0; j < targetCorners.length; j++) {
-            success = calculateLOS(povCorners[i], targetCorners[j]);
+
+            var success;
+
+            if (povCorners[i].y == targetCorners[j].y ||
+                    povCorners[i].x == targetCorners[j].x) {
+                // same horizontal or vertical line
+                success = true;
+            }
+            else {
+                success = raycastLOS(povCorners[i], targetCorners[j]);
+            }
             if (success) {
                 if (j == 0) {
                     firstCorner = true;
