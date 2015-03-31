@@ -244,7 +244,7 @@ function raycastLOS(sourceCorner, targetCorner) {
     var target = new THREE.Vector3(targetCorner.x, targetCorner.y, 4);
     var direction = target.clone().sub(source).normalize();
 
-    var startDistance = 1;
+    var startDistance = 7; // TODO: this should be in proportion to GRIDWIDTH
 
     var ray = new THREE.Raycaster(source, direction, startDistance, 10000);
 
@@ -618,6 +618,10 @@ function addHorizontalWallToEdge(edge) {
     edge.wall = cubeMesh;
 
     console.log("added horizontal wall to ("+edge.i+","+edge.j+")");
+
+    // TODO:
+    // The walls next to the pov cell are handled differently. Do not add them
+    // to collisionObjects.
 
     collisionObjects.push(cubeMesh);
 
