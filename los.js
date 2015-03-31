@@ -275,52 +275,6 @@ function raycastLOS(sourceCorner, targetCorner) {
     return true;
 }
 
-/*
-function horizontalLOS(sourceCorner, targetCorner) {
-    // this is for the case when the y coordinate is the same, ie. the ray
-    // is going directly right or left
-
-    var blockedAbove = false;
-    var blockedBelow = false;
-
-    var aboveCellIdxY = idxFromWidth(sourceCorner.y);
-    var belowCellIdxY = aboveCellIdxY-1;
-
-    // TODO: handle the case where the line goes along top or bottom edge of
-    // the grid
-
-    var start = idxFromWidth(sourceCorner.x);
-    var end = idxFromWidth(targetCorner.x);
-
-    if (start == end)
-        return true; // always LOS to the next cell
-
-    if (start > end) {
-        var tmp = end;
-        end = start;
-        start = tmp;
-    }
-
-    while (start < end) {
-
-        aboveCell = cells[start][aboveCellIdxY];
-        belowCell = cells[start][belowCellIdxY];
-
-        if (aboveCell.character)
-            blockedAbove = true;
-
-        if (belowCell.character)
-            blockedBelow = true;
-
-        if (blockedAbove && blockedBelow)
-            return false;
-
-        start++;
-    }
-    return true;
-}
-*/
-
 function checkAlignment(pov, corner1, corner2) {
 
     if (pov.x == corner1.x && corner1.x == corner2.x)
@@ -332,7 +286,7 @@ function checkAlignment(pov, corner1, corner2) {
     return true;
 }
 
-function notWalledIn(corner, index, array) {
+function walledInTowards(povCorner, targetCorner, index) {
     // see if a vertical and horizontal wall begin/end (depending on which
     // corner this is) here
 
@@ -346,46 +300,195 @@ function notWalledIn(corner, index, array) {
             // bottom left
             var v = verticalEdges[idxX][idxY];
             var h = horizontalEdges[idxX][idxY];
+            var hc = horizontalEdges[idxX-1][idxY];
+            var vc = verticalEdges[idxX][idxY-1];
+
+            if (v.wall && h.wall) {
+                // this is a corner
+                if (targetCorner.x < povCorner.x || targetCorner.y < povCorner.y)
+                    return true;
+            }
 
             // continuation pieces of wall (long horizontal or vertical)
-            var vc = verticalEdges[idxX][idxY-1];
-            var hc = horizontalEdges[idxX-1][idxY];
-            if ((v.wall && h.wall) || (h.wall && hc.wall) || (v.wall && vc.wall))
-                return false;
+
+            if (h.wall && hc.wall) {
+                if (targetCorner.y < povCorner.y)
+                    return true;
+            }
+
+            if (v.wall && vc.wall) {
+                if (targetCorner.x < povCorner.x)
+                    return true;
+            }
+
+            // reverse corners;  *L shape
+
+            if (v.wall && hc.wall) {
+                if (targetCorner.x < povCorner.x && targetCorner.y > povCorner.y)
+                    return true;
+            }
+
+            if (h.wall && vc.wall) {
+                if (targetCorner.x > povCorner.x && targetCorner.y < povCorner.y)
+                    return true;
+            }
+
+            // completely reverse corner
+
+            if (hc.wall && vc.wall) {
+                // this is a corner
+                if (targetCorner.x < povCorner.x && targetCorner.y < povCorner.y)
+                    return true;
+            }
+
             break;
+
         case 1:
             // top left
             var v = verticalEdges[idxX][idxY];
             var h = horizontalEdges[idxX][idxY+1];
-
             var vc = verticalEdges[idxX][idxY+1];
             var hc = horizontalEdges[idxX-1][idxY+1];
-            if ((v.wall && h.wall) || (h.wall && hc.wall) || (v.wall && vc.wall))
-                return false;
+
+            if (v.wall && h.wall) {
+                // this is a corner
+                if (targetCorner.x < povCorner.x || targetCorner.y > povCorner.y)
+                    return true;
+            }
+
+            // continuation pieces of wall (long horizontal or vertical)
+
+            if (h.wall && hc.wall) {
+                if (targetCorner.y >= povCorner.y)
+                    return true;
+            }
+
+            if (v.wall && vc.wall) {
+                if (targetCorner.x <= povCorner.x)
+                    return true;
+            }
+
+            // reverse corners;  *L shape
+
+            if (v.wall && hc.wall) {
+                // this is a corner
+                if (targetCorner.x < povCorner.x && targetCorner.y < povCorner.y)
+                    return true;
+            }
+
+            if (h.wall && vc.wall) {
+                // this is a corner
+                if (targetCorner.x > povCorner.x && targetCorner.y > povCorner.y)
+                    return true;
+            }
+
+            // completely reverse corner
+
+            if (hc.wall && vc.wall) {
+                if (targetCorner.x < povCorner.x && targetCorner.y > povCorner.y)
+                    return true;
+            }
+
             break;
+
         case 2:
             // top right
             var v = verticalEdges[idxX+1][idxY];
             var h = horizontalEdges[idxX][idxY+1];
-
             var vc = verticalEdges[idxX+1][idxY+1];
             var hc = horizontalEdges[idxX+1][idxY+1];
-            if ((v.wall && h.wall) || (h.wall && hc.wall) || (v.wall && vc.wall))
-                return false;
+
+            if (v.wall && h.wall) {
+                // this is a corner
+                if (!(targetCorner.x < povCorner.x && targetCorner.y < povCorner.y))
+                    return true;
+            }
+
+            // continuation pieces of wall (long horizontal or vertical)
+
+            if (h.wall && hc.wall) {
+                if (targetCorner.y > povCorner.y)
+                    return true;
+            }
+
+            if (v.wall && vc.wall) {
+                if (targetCorner.x > povCorner.x)
+                    return true;
+            }
+
+            // reverse corners;  *L shape
+
+            if (v.wall && hc.wall) {
+                // this is a corner
+                if (targetCorner.x > povCorner.x && targetCorner.y < povCorner.y)
+                    return true;
+            }
+
+            if (h.wall && vc.wall) {
+                // this is a corner
+                if (targetCorner.x < povCorner.x && targetCorner.y > povCorner.y)
+                    return true;
+            }
+
+            // completely reverse corner
+
+            if (hc.wall && vc.wall) {
+                if (targetCorner.x > povCorner.x && targetCorner.y > povCorner.y)
+                    return true;
+            }
+
             break;
+
         case 3:
             // bottom right
             var v = verticalEdges[idxX+1][idxY];
             var h = horizontalEdges[idxX][idxY];
-
             var vc = verticalEdges[idxX+1][idxY-1];
             var hc = horizontalEdges[idxX+1][idxY];
-            if ((v.wall && h.wall) || (h.wall && hc.wall) || (v.wall && vc.wall))
-                return false;
-            break;
-    }
 
-    return true;
+            if (v.wall && h.wall) {
+                // this is a corner
+                if (!(targetCorner.x < povCorner.x && targetCorner.y > povCorner.y))
+                    return true;
+            }
+
+            // continuation pieces of wall (long horizontal or vertical)
+
+            if (h.wall && hc.wall) {
+                if (targetCorner.y < povCorner.y)
+                    return true;
+            }
+
+            if (v.wall && vc.wall) {
+                if (targetCorner.x > povCorner.x)
+                    return true;
+            }
+
+            // reverse corners;  *L shape
+
+            if (v.wall && hc.wall) {
+                // this is a corner
+                if (targetCorner.x > povCorner.x && targetCorner.y > povCorner.y)
+                    return true;
+            }
+
+            if (h.wall && vc.wall) {
+                // this is a corner
+                if (targetCorner.x < povCorner.x && targetCorner.y < povCorner.y)
+                    return true;
+            }
+
+            // completely reverse corner
+
+            if (hc.wall && vc.wall) {
+                if (targetCorner.x > povCorner.x && targetCorner.y < povCorner.y)
+                    return true;
+            }
+
+            break;
+        }
+
+    return false;
 }
 
 function idxFromWidth(width) {
@@ -429,12 +532,9 @@ function calculateLOSToCell(pov, target)
     var povCorners = getCorners(pov);
     var targetCorners = getCorners(target);
 
-    // TODO: filter out those corners from calculation which are in a corner
-
-    povCorners = povCorners.filter(notWalledIn);
-
-    // FIXME: this is inexact! Should filter only for calculation towards those
-    // cells which happen to be on the other side of the corner.
+    for (var i = 0; i < povCorners.length; i++) {
+        povCorners[i].cornerIdx = i;
+    }
 
     function distanceFunction(a, b) {
         return targetCorners[0].distanceTo(a) - targetCorners[0].distanceTo(b);
@@ -453,8 +553,11 @@ function calculateLOSToCell(pov, target)
         for (var j = 0; j < targetCorners.length; j++) {
 
             var success;
-
-            if (povCorners[i].y == targetCorners[j].y ||
+            // filter out those corners from calculation which are in a corner
+            if (walledInTowards(povCorners[i], targetCorners[j], povCorners[i].cornerIdx)) {
+                success = false;
+            }
+            else if (povCorners[i].y == targetCorners[j].y ||
                     povCorners[i].x == targetCorners[j].x) {
                 // same horizontal or vertical line
                 success = true;
@@ -462,6 +565,7 @@ function calculateLOSToCell(pov, target)
             else {
                 success = raycastLOS(povCorners[i], targetCorners[j]);
             }
+
             if (success) {
                 if (j == 0) {
                     firstCorner = true;
