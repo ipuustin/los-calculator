@@ -612,10 +612,14 @@ function updateCellStatus(cell)
     if (los) {
         // console.log("los to ("+cell.i+","+cell.j+")");
         var colorMaterial = new THREE.MeshBasicMaterial(
-                {color: 0x505050, side:THREE.DoubleSide}
-        );
+                { color: 0x505050, side:THREE.DoubleSide });
         cell.color.material = colorMaterial;
-        // TODO: color also the character possibly in this cell
+
+        if (cell.character) {
+            var characterMaterial = new THREE.MeshLambertMaterial(
+                { color: 0x00bfff, side:THREE.DoubleSide });
+            cell.character.material = characterMaterial;
+        }
     }
     else {
         // console.log("no los to ("+cell.i+","+cell.j+")");
@@ -623,7 +627,11 @@ function updateCellStatus(cell)
                 {color: 0x202020, side:THREE.DoubleSide}
         );
         cell.color.material = colorMaterial;
-        // TODO: color also the character possibly in this cell
+        if (cell.character) {
+            var characterMaterial = new THREE.MeshLambertMaterial(
+                { color: 0x0000ff, side:THREE.DoubleSide });
+            cell.character.material = characterMaterial;
+        }
     }
 }
 
@@ -722,10 +730,6 @@ function addHorizontalWallToEdge(edge) {
     edge.wall = cubeMesh;
 
     console.log("added horizontal wall to ("+edge.i+","+edge.j+")");
-
-    // TODO:
-    // The walls next to the pov cell are handled differently. Do not add them
-    // to collisionObjects.
 
     collisionObjects.push(cubeMesh);
 
