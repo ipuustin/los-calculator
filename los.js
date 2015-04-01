@@ -252,6 +252,8 @@ function raycastLOS(sourceCorner, targetCorner) {
 
     var intersects = ray.intersectObjects(collisionObjects, true);
 
+    var idx = 0;
+
     // console.log("ray from ("+source.x+","+source.y+") to ("+target.x+","+target.y+")");
 
     if (intersects.length >= 1) {
@@ -259,16 +261,17 @@ function raycastLOS(sourceCorner, targetCorner) {
 
         // check if the obstacle was before or after this corner
 
-        if (Math.abs(intersects[0].distance - distance) < startDistance) {
+        if (intersects[idx].distance == distance) {
             // console.log("line of sight to the corner ("+intersects[0].distance+":"+distance+")");
             return true;
         }
-        else if (intersects[0].distance < distance) {
+        else if (intersects[idx].distance < distance) {
             // console.log("no line of sight to the corner ("+intersects[0].distance+":"+distance+")");
             return false;
         }
         else {
             // console.log("line of sight to the corner, cell free ("+intersects[0].distance+":"+distance+")");
+            // TODO: check if this is a corner that is causing the ray clipping.
             return true;
         }
     }
