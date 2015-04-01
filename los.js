@@ -858,7 +858,10 @@ function updateScene() {
         }
     }
 
-    // render again the tiles that changed color
+    // update line of sight helper lines
+    updateLOSLines();
+
+    // render again the tiles that changed color and the new helper lines
     renderer.render(scene, camera);
 }
 
@@ -905,13 +908,7 @@ function removeLosLines() {
     }
 }
 
-function onMouseMove(e) {
-    e.preventDefault();
-
-    mouseX = e.pageX - container.offsetLeft;
-    mouseY = e.pageY - container.offsetTop;
-
-    // console.log("" + mouseX + ":" + mouseY);
+function updateLOSLines() {
     removeLosLines();
 
     var mouse3D = new THREE.Vector3((mouseX/1000)*2-1, 1-(mouseY/1000)*2, 0);
@@ -933,6 +930,17 @@ function onMouseMove(e) {
     if (cell.povCorner && cell.losCorner1 && cell.losCorner2) {
         addLosLines(cell);
     }
+}
+
+function onMouseMove(e) {
+    e.preventDefault();
+
+    mouseX = e.pageX - container.offsetLeft;
+    mouseY = e.pageY - container.offsetTop;
+
+    // console.log("" + mouseX + ":" + mouseY);
+
+    updateLOSLines();
 
     renderer.render(scene, camera);
 }
