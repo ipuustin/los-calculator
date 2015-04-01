@@ -40,6 +40,8 @@ var container;
 var eventBox;
 var viewpointCell;
 
+var directionalLight1;
+
 /* the model for selected edges */
 
 /* example: horizontal edge starting from (2,1) and going to (3,1)
@@ -135,8 +137,7 @@ function initialize() {
     eventBoxG.faces.push(new THREE.Face3(0, 2, 3));
 
     var eventBoxMaterial = new THREE.MeshBasicMaterial(
-            {color: 0x202020, side:THREE.DoubleSide}
-    );
+            { color: 0x202020, side:THREE.DoubleSide });
     eventBox = new THREE.Mesh(eventBoxG, eventBoxMaterial);
     scene.add(eventBox);
 
@@ -163,13 +164,11 @@ function initialize() {
             color.faces.push(new THREE.Face3(0, 2, 3));
 
             var colorMaterial = new THREE.MeshBasicMaterial(
-                    {color: 0x505050, side:THREE.DoubleSide}
-            );
+                    { color: 0x505050, side:THREE.DoubleSide});
             var colorSquare = new THREE.Mesh(color, colorMaterial);
 
             cell = { "color" : colorSquare, "viewpoint" : null,
-                    "character" : null, "x" : x, "y" : y, "i" : i, "j" : j
-            };
+                    "character" : null, "x" : x, "y" : y, "i": i, "j" : j };
 
             cells[i][j] = cell;
 
@@ -210,17 +209,20 @@ function initialize() {
 
     // add some lights
 
+/*
     var hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.3);
     scene.add(hemisphereLight);
+*/
 
-    var directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.7);
-    directionalLight1.position.set(0, 1, 0);
+    directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight1.position.set(1, 0, 1);
     scene.add(directionalLight1);
 
+/*
     var directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight2.position.set(1, 0, 1);
+    directionalLight2.position.set(5, 0, 1);
     scene.add(directionalLight2);
-
+*/
     // set up mouse handler
 
     container.addEventListener('mousedown', onMouseDown, false);
@@ -623,8 +625,7 @@ function updateCellStatus(cell)
     else {
         // console.log("no los to ("+cell.i+","+cell.j+")");
         var colorMaterial = new THREE.MeshBasicMaterial(
-                {color: 0x202020, side:THREE.DoubleSide}
-        );
+                { color: 0x202020, side:THREE.DoubleSide });
         cell.color.material = colorMaterial;
         if (cell.character) {
             var characterMaterial = new THREE.MeshLambertMaterial(
@@ -647,7 +648,7 @@ function moveViewpointToCell(cell) {
         previous.viewpoint = null;
     }
 
-    var geometry = new THREE.SphereGeometry(5, 10, 10);
+    var geometry = new THREE.SphereGeometry(10, 10, 10);
     var material = new THREE.MeshLambertMaterial({color: 0xa00000});
     var sphere = new THREE.Mesh(geometry, material);
     sphere.position.x = x + (CELLSIZE/2);
@@ -664,7 +665,9 @@ function addCharacterToCell(cell) {
     var x = cell.x;
     var y = cell.y;
 
-    // var sphereGeometry = new THREE.SphereGeometry(10, 10, 10);
+    var sphereGeometry = new THREE.SphereGeometry(10, 10, 10);
+
+    sphereGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, 8));
 
     var cubeMaterial = new THREE.MeshLambertMaterial( {color: 0x0000ff, side:THREE.DoubleSide} );
 
@@ -674,7 +677,7 @@ function addCharacterToCell(cell) {
     var internalGeometry1 = new THREE.BoxGeometry(1, CELLSIZE, CELLSIZE);
     var internalGeometry2 = new THREE.BoxGeometry(CELLSIZE, 1,  CELLSIZE);
 
-    // cubeGeometry.merge(sphereGeometry);
+    cubeGeometry.merge(sphereGeometry);
     cubeGeometry.merge(internalGeometry1);
     cubeGeometry.merge(internalGeometry2);
     var cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
@@ -704,6 +707,9 @@ function updateCell(idxX, idxY) {
 
     var cell = cells[idxX][idxY];
 
+    if (cell == viewpointCell)
+        return; // no characters on top of viewpoint
+
     if (cell.character == null)
         addCharacterToCell(cell);
     else
@@ -715,7 +721,7 @@ function addHorizontalWallToEdge(edge) {
     var x = edge.x;
     var y = edge.y;
 
-    var cubeMaterial = new THREE.MeshLambertMaterial( {color: 0x24025f, side:THREE.DoubleSide} );
+    var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0x7b3f00, side:THREE.DoubleSide });
 
     var cubeBaseGeometry = new THREE.BoxGeometry(CELLSIZE, 5, 1);
     var cubeWallGeometry = new THREE.BoxGeometry(CELLSIZE, 1, CELLSIZE);
@@ -740,7 +746,7 @@ function addVerticalWallToEdge(edge) {
     var x = edge.x;
     var y = edge.y;
 
-    var cubeMaterial = new THREE.MeshLambertMaterial( {color: 0x24025f, side:THREE.DoubleSide} );
+    var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0x7b3f00, side:THREE.DoubleSide });
 
     var cubeBaseGeometry = new THREE.BoxGeometry(5, CELLSIZE, 1);
     var cubeWallGeometry = new THREE.BoxGeometry(1, CELLSIZE, CELLSIZE);
@@ -937,9 +943,22 @@ function onMouseMove(e) {
     mouseX = e.pageX - container.offsetLeft;
     mouseY = e.pageY - container.offsetTop;
 
-    // console.log("" + mouseX + ":" + mouseY);
-
     updateLOSLines();
+
+    renderer.render(scene, camera);
+}
+
+
+var degrees = 0.0;
+var interval = setInterval(function () { moveLight() }, 200);
+
+function moveLight() {
+    degrees += 0.01;
+
+    var x = Math.cos(degrees % (2*Math.PI))
+    var y = Math.sin(degrees % (2*Math.PI))
+
+    directionalLight1.position.set(x, y, 1);
 
     renderer.render(scene, camera);
 }
