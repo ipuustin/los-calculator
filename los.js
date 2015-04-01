@@ -570,17 +570,9 @@ function calculateLOSToCell(pov, target)
                 if (j == 0) {
                     firstCorner = true;
                     previousCorner = true;
+                    continue;
                 }
-                else if (j == 3 && firstCorner) {
-                    if (checkAlignment(povCorners[i], targetCorners[0], targetCorners[3]) &&
-                            !isWall(targetCorners[0], targetCorners[3])) {
-                        target.povCorner = povCorners[i];
-                        target.losCorner1 = targetCorners[0];
-                        target.losCorner2 = targetCorners[3];
-                        return true;
-                    }
-                }
-                else if (previousCorner) {
+                if (previousCorner) {
                     if (checkAlignment(povCorners[i], targetCorners[j-1], targetCorners[j]) &&
                             !isWall(targetCorners[j-1], targetCorners[j])) {
                         target.povCorner = povCorners[i];
@@ -589,9 +581,16 @@ function calculateLOSToCell(pov, target)
                         return true;
                     }
                 }
-                else {
-                    previousCorner = true;
+                if (j == 3 && firstCorner) {
+                    if (checkAlignment(povCorners[i], targetCorners[0], targetCorners[3]) &&
+                            !isWall(targetCorners[0], targetCorners[3])) {
+                        target.povCorner = povCorners[i];
+                        target.losCorner1 = targetCorners[0];
+                        target.losCorner2 = targetCorners[3];
+                        return true;
+                    }
                 }
+                previousCorner = true;
             }
             else {
                 previousCorner = false;
