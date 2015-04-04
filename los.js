@@ -1023,7 +1023,7 @@ function onMouseDown(e) {
 function addLosLines(cell) {
 
     var material = new THREE.LineBasicMaterial({
-        color: 0xff0000
+        color: 0x00ff00
     });
 
     var geometry1 = new THREE.Geometry();
