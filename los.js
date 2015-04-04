@@ -238,6 +238,59 @@ function getCorners(cell) {
     return cell.color.geometry.vertices.slice(0);
 }
 
+function isCorner(coord) {
+    return ((coord.x-(GRIDWIDTH/2)) % CELLSIZE == 0 && (coord.y-(GRIDWIDTH/2)) % CELLSIZE == 0)
+}
+
+function opensTowardsBottomLeft(idxX, idxY) {
+
+    // check that we are not against the bottom or left walls
+    if (idxX == 0 || idxY == 0)
+        return false;
+
+    if (verticalEdges[idxX][idxY-1].wall && horizontalEdges[idxX-1][idxY].wall)
+        return true;
+
+    return false;
+}
+
+function opensTowardsTopLeft(idxX, idxY) {
+
+    // check that we are not against the top or left walls
+    if (idxX == 0 || idxY == VERTICAL_CELLS+1)
+        return false;
+
+
+    if (verticalEdges[idxX][idxY].wall && horizontalEdges[idxX-1][idxY].wall)
+        return true;
+
+    return false;
+}
+
+function opensTowardsTopRight(idxX, idxY) {
+
+    // check that we are not against the top or right walls
+    if (idxX == HORIZONTAL_CELLS+1 || idxY == VERTICAL_CELLS+1)
+        return false;
+
+    if (verticalEdges[idxX][idxY].wall && horizontalEdges[idxX][idxY].wall)
+        return true;
+
+    return false;
+}
+
+function opensTowardsBottomRight(idxX, idxY) {
+
+    // check that we are not against the bottom or right walls
+    if (idxX == HORIZONTAL_CELLS+1 || idxY == 0)
+        return false;
+
+    if (verticalEdges[idxX][idxY-1].wall && horizontalEdges[idxX][idxY].wall)
+        return true;
+
+    return false;
+}
+
 function raycastLOS(sourceCorner, targetCorner) {
 
     // LOS detection happens at z-level 4
@@ -252,26 +305,84 @@ function raycastLOS(sourceCorner, targetCorner) {
 
     var intersects = ray.intersectObjects(collisionObjects, true);
 
-    var idx = 0;
+    var i = 0;
 
     // console.log("ray from ("+source.x+","+source.y+") to ("+target.x+","+target.y+")");
 
-    if (intersects.length >= 1) {
+    // FIXME: check if there are multiple collisions at the same corner?
+
+    while (i < intersects.length) {
         var distance = source.distanceTo(target);
 
         // check if the obstacle was before or after this corner
 
-        if (intersects[idx].distance == distance) {
+        if (Math.abs(intersects[i].distance - distance) < startDistance) {
             // console.log("line of sight to the corner ("+intersects[0].distance+":"+distance+")");
             return true;
         }
-        else if (intersects[idx].distance < distance) {
+        else if (intersects[i].distance < distance) {
             // console.log("no line of sight to the corner ("+intersects[0].distance+":"+distance+")");
+            // TODO: check if this is a corner that is causing the ray clipping.
+            if (isCorner(intersects[i].point)) {
+
+                idxX = idxFromWidth(intersects[i].point.x);
+                idxY = idxFromWidth(intersects[i].point.y);
+
+                if (idxX > 0) {
+                    if (horizontalEdges[idxX].wall && horizontalEdges[idxX-1].wall) {
+                        // a wall across this corner
+                        return false;
+                    }
+
+                }
+                if (idxY > 0) {
+                    if (verticalEdges[idxY].wall && verticalEdges[idxY-1].wall) {
+                        // a wall across this corner
+                        return false;
+                    }
+                }
+
+
+                /* Handle real wall corners depending on the direction towards which
+                   the direction vector is going.
+
+                       OO
+                       OO
+                   ---+
+                      |
+                      |
+                      |
+
+                */
+
+                if (direction.x < 0 && direction.y < 0) {
+                    // bottom left
+                    if (opensTowardsTopRight(idxX, idxY) || opensTowardsBottomLeft(idxX, idxY))
+                        return false;
+                }
+                else if (direction.x < 0 && direction.y > 0) {
+                    // top left
+                    if (opensTowardsTopLeft(idxX, idxY) || opensTowardsBottomRight(idxX, idxY))
+                        return false;
+                }
+                else if (direction.x > 0 && direction.y > 0) {
+                    // top right
+                    if (opensTowardsTopRight(idxX, idxY) || opensTowardsBottomLeft(idxX, idxY))
+                        return false;
+                }
+                else if (direction.x > 0 && direction.y < 0) {
+                    // bottom right
+                    if (opensTowardsTopLeft(idxX, idxY) || opensTowardsBottomRight(idxX, idxY))
+                        return false;
+                }
+
+                i++;
+                continue;
+            }
             return false;
         }
         else {
             // console.log("line of sight to the corner, cell free ("+intersects[0].distance+":"+distance+")");
-            // TODO: check if this is a corner that is causing the ray clipping.
             return true;
         }
     }
@@ -503,28 +614,53 @@ function idxFromWidth(width) {
 function isWall(corner1, corner2) {
     // is there a wall between the two corners?
 
+    var corner1idxX = idxFromWidth(corner1.x);
+    var corner1idxY = idxFromWidth(corner1.y);
+    var corner2idxX = idxFromWidth(corner2.x);
+    var corner2idxY = idxFromWidth(corner2.y);
+
+    var smallerIdxX = corner1.x < corner2.x ? corner1idxX : corner2idxX;
+    var smallerIdxY = corner1.y < corner2.y ? corner1idxY : corner2idxY;
+
+    var biggerIdxX = corner1.x < corner2.x ? corner2idxX : corner1idxX;
+    var biggerIdxY = corner1.y < corner2.y ? corner2idxY : corner1idxY;
+
     if (corner1.x == corner2.x) {
         // vertical edge
-        var idxX = idxFromWidth(corner1.x);
-        var idxY = corner1.y < corner2.y ? idxFromWidth(corner1.y) : idxFromWidth(corner2.y);
-
-        return verticalEdges[idxX][idxY].wall != null;
+        if (verticalEdges[corner1idxX][smallerIdxY].wall)
+            return true;
     }
-    else if (corner1.y == corner2.y) {
+
+    if (corner1.y == corner2.y) {
         // horizontal edge
-        var idxX = corner1.x < corner2.x ? idxFromWidth(corner1.x) : idxFromWidth(corner2.x);
-        var idxY = idxFromWidth(corner1.y);
-
-        var d = horizontalEdges[idxX][idxY];
-        if (d == null) {
-            console.log("impossible!");
-            return false;
-        }
-
-        return horizontalEdges[idxX][idxY].wall != null;
+        if (horizontalEdges[smallerIdxX][corner1idxY].wall)
+            return true;
     }
 
-    console.log("error doing the wall check!");
+    // check both corners in case they happen be a wall corner that opens
+    // towards the viewpoint cell
+
+    if (biggerIdxX < viewpointCell.i && biggerIdxY < viewpointCell.j) {
+        // bottom left
+        if (opensTowardsTopRight(biggerIdxX, biggerIdxY))
+            return true;
+    }
+    else if (biggerIdxX < viewpointCell.i && smallerIdxY > viewpointCell.j+1) {
+        // top left
+        if (opensTowardsBottomRight(biggerIdxX, smallerIdxY))
+            return true;
+    }
+    else if (smallerIdxX > viewpointCell.i+1 && smallerIdxY > viewpointCell.j+1) {
+        // top right
+        if (opensTowardsBottomLeft(smallerIdxX, smallerIdxY))
+            return true;
+    }
+    else if (smallerIdxX > viewpointCell.i+1 && biggerIdxY < viewpointCell.j) {
+        // bottom right
+        if (opensTowardsTopLeft(smallerIdxX, biggerIdxY))
+            return true;
+    }
+
     return false;
 }
 
@@ -727,7 +863,7 @@ function addHorizontalWallToEdge(edge) {
     var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0x7b3f00, side:THREE.DoubleSide });
 
     var cubeBaseGeometry = new THREE.BoxGeometry(CELLSIZE, 5, 1);
-    var cubeWallGeometry = new THREE.BoxGeometry(CELLSIZE, 1, CELLSIZE);
+    var cubeWallGeometry = new THREE.BoxGeometry(CELLSIZE, 0, CELLSIZE);
 
     cubeBaseGeometry.merge(cubeWallGeometry);
     var cubeMesh = new THREE.Mesh(cubeBaseGeometry, cubeMaterial);
@@ -752,7 +888,7 @@ function addVerticalWallToEdge(edge) {
     var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0x7b3f00, side:THREE.DoubleSide });
 
     var cubeBaseGeometry = new THREE.BoxGeometry(5, CELLSIZE, 1);
-    var cubeWallGeometry = new THREE.BoxGeometry(1, CELLSIZE, CELLSIZE);
+    var cubeWallGeometry = new THREE.BoxGeometry(0, CELLSIZE, CELLSIZE);
 
     cubeBaseGeometry.merge(cubeWallGeometry);
     var cubeMesh = new THREE.Mesh(cubeBaseGeometry, cubeMaterial);
