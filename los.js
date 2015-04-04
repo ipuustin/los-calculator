@@ -860,7 +860,7 @@ function addHorizontalWallToEdge(edge) {
     var x = edge.x;
     var y = edge.y;
 
-    var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0x7b3f00, side:THREE.DoubleSide });
+    var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0x9b0000, side:THREE.DoubleSide });
 
     var cubeBaseGeometry = new THREE.BoxGeometry(CELLSIZE, 5, 1);
     var cubeWallGeometry = new THREE.BoxGeometry(CELLSIZE, 0, CELLSIZE);
@@ -885,7 +885,7 @@ function addVerticalWallToEdge(edge) {
     var x = edge.x;
     var y = edge.y;
 
-    var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0x7b3f00, side:THREE.DoubleSide });
+    var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0x9b0000, side:THREE.DoubleSide });
 
     var cubeBaseGeometry = new THREE.BoxGeometry(5, CELLSIZE, 1);
     var cubeWallGeometry = new THREE.BoxGeometry(0, CELLSIZE, CELLSIZE);
