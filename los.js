@@ -322,21 +322,21 @@ function raycastLOS(sourceCorner, targetCorner) {
         }
         else if (intersects[i].distance < distance) {
             // console.log("no line of sight to the corner ("+intersects[0].distance+":"+distance+")");
-            // TODO: check if this is a corner that is causing the ray clipping.
+            // check if this is the corner that is causing ray clipping.
             if (isCorner(intersects[i].point)) {
 
-                idxX = idxFromWidth(intersects[i].point.x);
-                idxY = idxFromWidth(intersects[i].point.y);
+                var idxX = idxFromWidth(intersects[i].point.x);
+                var idxY = idxFromWidth(intersects[i].point.y);
 
                 if (idxX > 0) {
-                    if (horizontalEdges[idxX].wall && horizontalEdges[idxX-1].wall) {
+                    if (horizontalEdges[idxX][idxY].wall && horizontalEdges[idxX-1][idxY].wall) {
                         // a wall across this corner
                         return false;
                     }
 
                 }
                 if (idxY > 0) {
-                    if (verticalEdges[idxY].wall && verticalEdges[idxY-1].wall) {
+                    if (verticalEdges[idxX][idxY].wall && verticalEdges[idxX][idxY-1].wall) {
                         // a wall across this corner
                         return false;
                     }
