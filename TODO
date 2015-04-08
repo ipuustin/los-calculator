@@ -1,0 +1,13 @@
+TODO
+
+* Clean up the code; get rid of global state
+* Make point of view character changeable
+    * Use right mouse button for selecting another character
+* Make the reference HTML page nicer
+* Implement camera controls
+    * Make figurines with a suitable mesh
+    * Make the topology better for perspective view
+* Performance improvements!
+    * Do not brute force the LoS calculation for all cells
+* Check how the app works on mobile
+* Make scene size non-fixed
