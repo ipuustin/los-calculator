@@ -662,6 +662,19 @@ function isWall(corner1, corner2) {
             return true;
     }
 
+    // FIXME: check the case where next to wall is a character -- the LOS line
+    // must not go through the corner between the character and the wall
+    //
+    // bottom left: if horizontal wall and a character on the right and below
+    // of the wall, prevent LOS from going through the boundary between wall
+    // and the character. For example, in the following case there should be no
+    // LOS to the cell between the two characters:
+    //
+    //           V
+    //        _
+    //       O O
+    //
+
     return false;
 }
 
