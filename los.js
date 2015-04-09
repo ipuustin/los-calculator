@@ -323,8 +323,8 @@ function raycastLOS(sourceCorner, targetCorner) {
             // check if this is the corner that is causing ray clipping.
             if (isCorner(intersects[i].point)) {
 
-                var idxX = idxFromWidth(intersects[i].point.x);
-                var idxY = idxFromWidth(intersects[i].point.y);
+                var idxX = Math.ceil(idxFromWidth(intersects[i].point.x));
+                var idxY = Math.ceil(idxFromWidth(intersects[i].point.y));
 
                 if (idxX > 0) {
                     if (horizontalEdges[idxX][idxY].wall && horizontalEdges[idxX-1][idxY].wall) {
@@ -1101,4 +1101,13 @@ function moveLight() {
     directionalLight1.position.set(x, y, 1);
 
     renderer.render(scene, camera);
+}
+
+
+function runTest() {
+    for (var i = 0; i < 50; i++) {
+        mouseX = Math.ceil(Math.random()*1000);
+        mouseY = Math.ceil(Math.random()*1000);
+        updateScene();
+    }
 }
