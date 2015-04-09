@@ -25,7 +25,7 @@
 var CELLSIZE = 23;
 var HORIZONTAL_CELLS = 25;
 var VERTICAL_CELLS = 25;
-var GRIDWIDTH = CELLSIZE*HORIZONTAL_CELLS
+var GRIDWIDTH = CELLSIZE*HORIZONTAL_CELLS;
 
 var losLine1;
 var losLine2;
@@ -108,8 +108,7 @@ function initialize() {
         var geometry = new THREE.Geometry();
         geometry.vertices.push(
             new THREE.Vector3(i * CELLSIZE - (GRIDWIDTH/2), -(GRIDWIDTH/2), 25),
-            new THREE.Vector3(i * CELLSIZE - (GRIDWIDTH/2), (GRIDWIDTH/2), 25)
-        );
+            new THREE.Vector3(i * CELLSIZE - (GRIDWIDTH/2), (GRIDWIDTH/2), 25));
         var line = new THREE.Line(geometry, material);
         scene.add(line);
     }
@@ -118,8 +117,7 @@ function initialize() {
         var geometry = new THREE.Geometry();
         geometry.vertices.push(
             new THREE.Vector3(-(GRIDWIDTH/2), i * CELLSIZE - (GRIDWIDTH/2), 25),
-            new THREE.Vector3((GRIDWIDTH/2), i * CELLSIZE - (GRIDWIDTH/2), 25)
-        );
+            new THREE.Vector3((GRIDWIDTH/2), i * CELLSIZE - (GRIDWIDTH/2), 25));
         var line = new THREE.Line(geometry, material);
         scene.add(line);
     }
@@ -239,13 +237,13 @@ function getCorners(cell) {
 }
 
 function isCorner(coord) {
-    return ((coord.x-(GRIDWIDTH/2)) % CELLSIZE == 0 && (coord.y-(GRIDWIDTH/2)) % CELLSIZE == 0)
+    return ((coord.x-(GRIDWIDTH/2)) % CELLSIZE === 0 && (coord.y-(GRIDWIDTH/2)) % CELLSIZE === 0);
 }
 
 function opensTowardsBottomLeft(idxX, idxY) {
 
     // check that we are not against the bottom or left walls
-    if (idxX == 0 || idxY == 0)
+    if (idxX === 0 || idxY === 0)
         return false;
 
     if (verticalEdges[idxX][idxY-1].wall && horizontalEdges[idxX-1][idxY].wall)
@@ -257,7 +255,7 @@ function opensTowardsBottomLeft(idxX, idxY) {
 function opensTowardsTopLeft(idxX, idxY) {
 
     // check that we are not against the top or left walls
-    if (idxX == 0 || idxY == VERTICAL_CELLS+1)
+    if (idxX === 0 || idxY === VERTICAL_CELLS+1)
         return false;
 
 
@@ -282,7 +280,7 @@ function opensTowardsTopRight(idxX, idxY) {
 function opensTowardsBottomRight(idxX, idxY) {
 
     // check that we are not against the bottom or right walls
-    if (idxX == HORIZONTAL_CELLS+1 || idxY == 0)
+    if (idxX === HORIZONTAL_CELLS+1 || idxY === 0)
         return false;
 
     if (verticalEdges[idxX][idxY-1].wall && horizontalEdges[idxX][idxY].wall)
@@ -602,6 +600,9 @@ function walledInTowards(povCorner, targetCorner, index) {
             }
 
             break;
+
+        default:
+            break;
         }
 
     return false;
@@ -708,7 +709,7 @@ function calculateLOSToCell(pov, target)
             }
 
             if (success) {
-                if (j == 0) {
+                if (j === 0) {
                     firstCorner = true;
                     previousCorner = true;
                     continue;
@@ -849,7 +850,7 @@ function updateCell(idxX, idxY) {
     if (cell == viewpointCell)
         return; // no characters on top of viewpoint
 
-    if (cell.character == null)
+    if (cell.character === null)
         addCharacterToCell(cell);
     else
         removeCharacterFromCell(cell);
@@ -921,7 +922,7 @@ function updateHorizontalWall(idxX, idxY) {
 
     var edge = horizontalEdges[idxX][idxY];
 
-    if (edge.wall == null) {
+    if (edge.wall === null) {
         addHorizontalWallToEdge(edge);
     }
     else {
@@ -933,7 +934,7 @@ function updateVerticalWall(idxX, idxY) {
 
     var edge = verticalEdges[idxX][idxY];
 
-    if (edge.wall == null) {
+    if (edge.wall === null) {
         addVerticalWallToEdge(edge);
     }
     else {
@@ -949,7 +950,7 @@ function updateScene() {
     mouseCaster.setFromCamera(mouse3D.clone(), camera);
     var intersects = mouseCaster.intersectObject(eventBox);
 
-    if (intersects.length == 0)
+    if (intersects.length === 0)
         return;
 
     var x = Math.round(intersects[0].point.x) + (GRIDWIDTH/2);
@@ -1059,7 +1060,7 @@ function updateLOSLines() {
     mouseCaster.setFromCamera(mouse3D.clone(), camera);
     var intersects = mouseCaster.intersectObject(eventBox);
 
-    if (intersects.length == 0) {
+    if (intersects.length === 0) {
         return;
     }
 
@@ -1089,13 +1090,13 @@ function onMouseMove(e) {
 
 
 var degrees = 0.0;
-var interval = setInterval(function () { moveLight() }, 200);
+var interval = setInterval(function () { moveLight(); }, 200);
 
 function moveLight() {
     degrees += 0.01;
 
-    var x = Math.cos(degrees % (2*Math.PI))
-    var y = Math.sin(degrees % (2*Math.PI))
+    var x = Math.cos(degrees % (2*Math.PI));
+    var y = Math.sin(degrees % (2*Math.PI));
 
     directionalLight1.position.set(x, y, 1);
 
